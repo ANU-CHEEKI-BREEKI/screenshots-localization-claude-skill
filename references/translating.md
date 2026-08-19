@@ -14,8 +14,16 @@ Then:
 python3 scripts/find-translation.py <folder> "Equip" "Inventory" "Base Damage"
 ```
 
+Search the **whole folder**. UI labels, item names, skill names and tooltips are usually separate
+tables, and narrowing to the one file that looks right is how most of the strings come back
+"not found".
+
 Use what it returns verbatim, even where you would have phrased it differently. Consistency with
 the app beats elegance. Report which strings it could not find, and translate only those.
+
+When the tool reports more than one wording for a string, it is because a tooltip or a stat-modifier
+table phrases it differently from the button — often in another grammatical case. Take the one from
+the file that holds the **UI strings**. Do not average them and do not pick the prettiest.
 
 ## Translating from context
 

@@ -163,7 +163,21 @@ python3 scripts/find-translation.py <folder> "Equip" "Base Damage" "Inventory"
 It searches CSV, JSON, `.strings`, `.arb` and XLIFF files, matches on the source value, and prints
 what every locale has for it. Two layouts are handled: one file per locale keyed by id, and one wide
 file with a column per locale. Use what it finds verbatim — an existing translation is the product's
-own voice and beats anything you would write. Report which strings it could not find.
+own voice and beats anything you would write.
+
+Three things to get right here:
+
+- **Search the whole folder, not one file.** UI labels, item names, mastery names and tooltips
+  usually live in separate tables. Narrowing to the file that looks right is how two thirds of the
+  strings come back "not found".
+- **The same string often has more than one wording**, because a tooltip or a modifier table says it
+  in a different grammatical form than the button does. The tool reports every candidate with its
+  file rather than picking one. Take the wording from the file that holds the **UI strings** — a
+  genitive lifted from a tooltip into a button is a mistake a native speaker spots instantly.
+- **Report which strings it could not find**, and translate only those from context.
+
+Expect the official wording to differ from yours, sometimes on words you were confident about. That
+is the point of looking: a good translation that is not the product's own is still the wrong one.
 
 **The user has no translations.** Translate from context, not word by word. The critical rule: look
 at what the screenshot actually shows. A prompt over a character dragging a chest is "release", not
@@ -208,9 +222,27 @@ Two failure modes the renderer guards against, because both are silent otherwise
   then looks *almost* right, which is worse than an error. If you see
   `[WARN] 'X' did not resolve`, the output is wrong — fix it before showing anyone.
 
-Check that the supplied font actually covers the target script. A game face built for Latin often
-has no Cyrillic or Greek, and the browser will fall back per-glyph without saying anything. If it
-does not cover the language, say so and ask what they want to use instead.
+### One font per writing system is the normal case
+
+A project rarely ships one font for every language. The display face is built for Latin, and each
+other script gets its own file — a folder of them named `Greek/`, `Korean/`, `Thai/`, `Arab/` and so
+on, plus one general fallback carrying Cyrillic. So **there is no single "the app's font"**: there
+is a font per locale, and the spec for each locale names its own.
+
+Never assume the Latin face covers the target language. Check it:
+
+```bash
+python3 scripts/check-font-coverage.py <font.ttf> --script cyrillic greek
+python3 scripts/check-font-coverage.py <fonts-folder> --spec spec.uk.json
+```
+
+It reads the font's cmap table and lists what is missing. A real example: the Latin face of a game
+covered 722 codepoints — every Latin script, Vietnamese and Turkish included — and **not one
+Cyrillic or Greek letter**. Rendering Ukrainian with it would have substituted every single glyph,
+silently, and the output would have looked fine at a glance.
+
+When a font does not cover the language, look for the project's own fallback before proposing one:
+the folder almost always contains it, and using their file keeps the render honest.
 
 ## Numbers are text too
 
@@ -253,6 +285,7 @@ install ImageMagick and the scripts use `magick` instead.
 | `scripts/sample-colors.mjs` | Reads the real colour of every label out of the originals |
 | `scripts/build-gallery.py` | Builds the before/after review page from `templates/gallery.html` |
 | `scripts/find-translation.py` | Finds existing translations for a source string in a folder |
+| `scripts/check-font-coverage.py` | Checks a font actually contains the target script's characters |
 | `templates/gallery.html` | The review page itself — restyle here, no Python involved |
 | `fonts/` (yours) | Put supplied font files anywhere and point `fonts[].src` at them |
 | `examples/spec.example.json` | A filled-in spec to copy |

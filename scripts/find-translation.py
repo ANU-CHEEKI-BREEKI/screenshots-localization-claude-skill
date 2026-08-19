@@ -126,7 +126,8 @@ def search(folder, needles, only_file=None):
                 if key in wanted and cols.get(i):
                     for j, other in enumerate(row):
                         if cols.get(j) and j != i and other.strip():
-                            results[wanted[key]][cols[j]] = (other.strip(), os.path.basename(path))
+                            results[wanted[key]].setdefault(cols[j], []).append(
+                                (other.strip(), os.path.basename(path)))
 
     # --- one file per locale: find the id by its english value, then look it up everywhere ---
     per_file = {}
@@ -152,7 +153,8 @@ def search(folder, needles, only_file=None):
         for (loc, path), pairs in per_file.items():
             for key in keys:
                 if key in pairs and pairs[key].strip():
-                    results[needle][loc] = (pairs[key].strip(), os.path.basename(path))
+                    results[needle].setdefault(loc, []).append(
+                        (pairs[key].strip(), os.path.basename(path)))
 
     return results
 
@@ -170,13 +172,25 @@ def main():
 
     results = search(args.folder, args.needles, args.file)
 
+    # the same source string often lives in several files - a ui master, a tooltip table, an item
+    # table - with wordings that differ by case or grammar. picking one silently is how a screen
+    # ends up with a tooltip's genitive in a button, so every distinct candidate is reported
+    def distinct(entries):
+        seen = {}
+        for value, src in entries:
+            seen.setdefault(value, []).append(src)
+        return seen
+
     if args.json:
         print(json.dumps(
-            {n: {loc: v for loc, (v, _src) in locs.items()} for n, locs in results.items()},
+            {n: {loc: [{"value": v, "files": sorted(set(f))} for v, f in distinct(e).items()]
+                 for loc, e in locs.items()}
+             for n, locs in results.items()},
             ensure_ascii=False, indent=2,
         ))
         return
 
+    conflicts = 0
     for needle in args.needles:
         found = results.get(needle)
         print(f"\n{needle!r}")
@@ -184,8 +198,19 @@ def main():
             print("   not found - translate it from context instead")
             continue
         for loc in sorted(found):
-            value, src = found[loc]
-            print(f"   {loc:<10} {value:<40} {src}")
+            options = distinct(found[loc])
+            if len(options) == 1:
+                value, srcs = next(iter(options.items()))
+                print(f"   {loc:<10} {value:<40} {', '.join(sorted(set(srcs)))}")
+            else:
+                conflicts += 1
+                print(f"   {loc:<10} {len(options)} DIFFERENT wordings - pick by context:")
+                for value, srcs in options.items():
+                    print(f"   {'':<10}   {value:<38} {', '.join(sorted(set(srcs)))}")
+
+    if conflicts:
+        print(f"\n{conflicts} locale/string pairs have more than one wording. Prefer the file that "
+              f"holds the UI strings; a tooltip or item table may carry a different grammatical form.")
 
     missing = [n for n in args.needles if n not in results]
     if missing:
