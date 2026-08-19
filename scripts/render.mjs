@@ -101,7 +101,10 @@ function renderText(spec, text) {
     t.transform ? `text-transform:${t.transform}` : '',
     t.opacity != null ? `opacity:${t.opacity}` : '',
     t.maxW ? `width:${t.maxW}px` : '',
-    wrapping ? `white-space:normal;text-align:${t.align};overflow-wrap:break-word` : 'white-space:pre',
+    // a fixed width turns the anchor into a box, so the text has to be re-aligned inside it or a
+    // centred label silently becomes a left-aligned one
+    t.maxW ? `text-align:${t.align}` : '',
+    wrapping ? 'white-space:normal;overflow-wrap:break-word' : 'white-space:pre',
     `line-height:${t.lineHeight ?? (wrapping ? 1.12 : 1)}`,
     plate,
     plateWidth,
@@ -114,7 +117,21 @@ function renderText(spec, text) {
       ` data-wrap="${wrapping ? 1 : 0}"`
     : '';
 
-  return `<div${fit} style="${style}">${escapeHtml(t.t)}</div>`;
+  // "13 (6) Stamina Use" is one line in the game but three colours, and the digits are a different
+  // width in every font. Splitting it into runs lets the browser space them, so the label can never
+  // collide with its own number the way three separately positioned entries do
+  const body = t.runs
+    ? t.runs.map((r) => {
+        const runStyle = [
+          r.color ? `color:${r.color}` : '',
+          r.size ? `font-size:${r.size}px` : '',
+          r.weight ? `font-weight:${r.weight}` : '',
+        ].filter(Boolean).join(';');
+        return `<span style="${runStyle}">${escapeHtml(r.t)}</span>`;
+      }).join('')
+    : escapeHtml(t.t);
+
+  return `<div${fit} style="${style}">${body}</div>`;
 }
 
 /** a grid repeats one label over a set of x/y positions, for things like a row of item cards */
@@ -153,8 +170,13 @@ function fontFaces(spec, specDir) {
 
     const data = readFileSync(file).toString('base64');
 
+    // a script font is often latin-blind: noto sans arabic has no "(", "/" or "|" at all. declaring a
+    // second file under the same family with a unicodeRange lets the browser take those few
+    // codepoints from the latin face and everything else from the script face, per glyph
+    const range = f.unicodeRange ? `unicode-range:${f.unicodeRange};` : '';
+
     return `@font-face{font-family:'${f.family}';` +
-      `font-weight:${f.weight ?? 400};font-style:${f.style ?? 'normal'};` +
+      `font-weight:${f.weight ?? 400};font-style:${f.style ?? 'normal'};${range}` +
       `src:url(data:${MIME[ext]};base64,${data}) format('${FORMAT[ext]}');font-display:block}`;
   }).join('\n');
 }

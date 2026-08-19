@@ -158,3 +158,24 @@ The one legitimate use is a final deliverable made from screenshots that still h
 when clean source images do not exist and never will. Then set `mask: true`, give `maskColor` the
 colour of the surface under the label, and `maskW` the width of the original string so no tail of
 it sticks out.
+
+## `runs` — one line, several colours
+
+A text entry may carry `runs` instead of relying on `t` alone. Each run is drawn inline, in order,
+inside the same box, so the browser does the spacing:
+
+| Field | Meaning |
+| --- | --- |
+| `t` | the run's text |
+| `color` | overrides the entry's colour for this run |
+| `size` | overrides the entry's font size for this run |
+| `weight` | overrides the entry's weight for this run |
+| `src` | the source string, so a generator can translate just this run |
+
+`t` on the entry stays as the joined text, which is what `fit` measures and what the log prints.
+
+## `unicodeRange` on a font entry
+
+Restricts a `@font-face` to a set of codepoints. Declaring two files under the same `family`, one of
+them ranged, makes the browser fall back per glyph — the way to give a script font the ASCII
+punctuation it does not have.

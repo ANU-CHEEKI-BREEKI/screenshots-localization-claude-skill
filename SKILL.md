@@ -275,6 +275,67 @@ that came out of the project's own localization files.
 
 `references/spec-format.md` has the fields. `render.mjs` reports every label it shrank.
 
+A script font is often **latin-blind**: Noto Sans Arabic has no `(`, `/` or `|` at all, and those
+survive untranslated in strings like `77/100(+50)`. Declare the latin face a second time under the
+*same* family with a `unicodeRange`, and the browser takes those few codepoints from it and
+everything else from the script face:
+
+```json
+"fonts": [
+  { "family": "Game UI", "src": "../fonts/NotoSansArabic.ttf", "weight": "100 900" },
+  { "family": "Game UI", "src": "../fonts/Alata-Regular.ttf", "weight": "100 900",
+    "unicodeRange": "U+0000-00FF" }
+]
+```
+
+`check-font-coverage.py` finds this before a render does: run it against every locale's own strings,
+not against a script sample.
+
+## One calibrated layout, many locales
+
+Calibration is expensive and language independent: coordinates, colours and the room each label has
+are properties of the *image*, not of the words. Do it once, in one language, then generate the rest.
+
+Freeze the calibrated spec as `layout.json` with the **English** strings in place, keeping every
+`src`. A generator then writes one `spec.<locale>.json` per language: same geometry, swapped strings,
+and the font file that covers that script. Never let the generator write back over its own input —
+point it at `layout.json` and have it emit `spec.*.json`, or the second run eats the first one's
+output.
+
+Two things the generator should do that a hand-written spec usually forgets:
+
+- **Give every label a width budget.** Group the labels on a screen into rows by `y`, and for each
+  one measure the distance to whatever sits to its right — the next label, or the panel edge. That
+  distance is its `maxW`. With `fit` on, a language that runs long shrinks instead of crossing into
+  the value beside it. English has slack that Finnish, Greek and Romanian do not.
+- **Translate the grids too.** A `grids` entry is a label repeated over a set of positions, and it is
+  easy to walk `texts` and silently leave every card in a grid in English.
+
+Check the whole set at once with `build-gallery-multi.py`: one page, every locale behind a switcher.
+A font that fell back, a button that overflowed, a column that collided — one arrow key apart.
+
+## A number and the label beside it are one entry
+
+`13 (6) Stamina Use` looks like three entries: a white number, a green bonus, a grey label, each with
+its own `x`. That works in exactly one font. Digits are a different width in every face, so the
+moment the locale changes the label's fixed `x` lands on top of its own number, or a gap opens.
+
+Use `runs` instead — one entry, one `x`, colours per run:
+
+```json
+{ "x": 1976, "y": 679, "runs": [
+    { "t": "13", "color": "#eeefef" },
+    { "t": " " },
+    { "t": "(6)", "color": "#1ce321" },
+    { "t": " " },
+    { "t": "Stamina Use", "color": "#a49ea5", "src": "Stamina Use" }
+] }
+```
+
+The browser spaces them, so it is right in all of them. Any run can carry its own `src`, `size` and
+`weight`. The same applies to `Level 2/10` and to anything else the original draws as one line in
+more than one colour.
+
 ## Numbers are text too
 
 Draw every number the screenshot shows: counters, stat values, ranks like `1/5`, currency amounts,
@@ -315,9 +376,11 @@ install ImageMagick and the scripts use `magick` instead.
 | `scripts/render.mjs` | Draws the spec onto the source images and screenshots each at full size |
 | `scripts/sample-colors.mjs` | Reads the real colour of every label out of the originals |
 | `scripts/build-gallery.py` | Builds the before/after review page from `templates/gallery.html` |
+| `scripts/build-gallery-multi.py` | Builds one review page covering every locale, with a language switcher |
 | `scripts/find-translation.py` | Finds existing translations for a source string in a folder |
 | `scripts/check-font-coverage.py` | Checks a font actually contains the target script's characters |
-| `templates/gallery.html` | The review page itself — restyle here, no Python involved |
+| `templates/gallery.html` | The single-locale review page — restyle here, no Python involved |
+| `templates/gallery-multi.html` | The all-locales review page |
 | `fonts/` (yours) | Put supplied font files anywhere and point `fonts[].src` at them |
 | `examples/spec.example.json` | A filled-in spec to copy |
 | `references/spec-format.md` | Every field of the spec |
