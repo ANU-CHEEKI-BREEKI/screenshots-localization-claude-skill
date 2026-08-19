@@ -68,6 +68,28 @@ Copy what the original does, which is usually less than you think:
 - Text on a flat card, panel or button: **none**. A shadow here reads as wrong immediately.
 - Text over a busy background at small size: a tight dark halo rather than an offset shadow.
 
+## Numbers
+
+Every digit on screen is a label and needs an entry. A gameplay HUD with nothing but counters is a
+fully populated screen, not an empty one — see "Numbers are text too" in SKILL.md for why.
+
+They behave differently from words, in ways worth knowing before measuring:
+
+- **They are usually centred.** Value columns, badges, segmented bars and pills all centre their
+  contents, so a number that looks left-aligned next to one row is usually centred over the whole
+  column. Check two rows of different digit counts: if `104` and `33` share a centre, they are
+  centred; if they share a left edge, they are not.
+- **They are smaller than the label they belong to.** A stat value is typically one step down from
+  its name, and a progress readout like `60/110` two steps down.
+- **A composite value is often two entries.** `Level 2/10` is a bright `2` and a dim `/10`; `13(6)`
+  is a white number and a green one. Split them so each gets its own colour.
+- **The sampling box is sized from the string.** A one-character label like `4` gets a box a few
+  pixels wide, which is exactly what you want — a wider one would average in the background and
+  turn a saturated stat colour into mud.
+
+Keep the original's formatting untouched: thousands separators, decimal comma versus point, and
+anything in brackets. `103 385` stays `103 385`.
+
 ## Colours
 
 Do not read colours off the image by eye — run `sample-colors.mjs`. It has repeatedly turned up

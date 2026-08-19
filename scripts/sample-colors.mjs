@@ -67,8 +67,14 @@ for (const screen of spec.screens) {
     const size = t.size ?? spec.defaults.size;
     const align = t.align ?? spec.defaults.align;
 
-    // tight on purpose: a taller or wider box starts reporting the icon next to the label
-    const w = Math.min(320, Math.round(size * 5.0));
+    // the box is scaled to the string it has to cover. a fixed width would reach past a short
+    // label like "4" or "1/5" into the background and average that in, which turns a saturated
+    // stat colour into mud
+    // the width follows the ORIGINAL string, which is what the box has to sit on. "src" records
+    // it; without one the translation stands in, and "sampleW" overrides both when a translation
+    // runs long enough to reach past the original into an icon or a bar next to it
+    const covers = String(t.src ?? t.t).length;
+    const w = t.sampleW ?? Math.min(320, Math.max(size, Math.round(covers * size * 0.62)));
     const h = Math.max(8, Math.round(size * 0.78));
     const left = align === 'center' ? t.x - w / 2 : align === 'right' ? t.x - w : t.x;
 

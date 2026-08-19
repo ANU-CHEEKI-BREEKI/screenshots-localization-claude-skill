@@ -63,7 +63,7 @@ only `locale` and the `t` strings change — so a new language starts as a copy 
 |---|---|
 | `file` | File name, identical in the source folder and the output folder. |
 | `note` | One line shown in the gallery. Say what the screen is. |
-| `texts` | The labels. A screen with no text to localize keeps `"texts": []` and is copied through. |
+| `texts` | The labels — **including every number on screen**. A screen with genuinely nothing to draw keeps `"texts": []` and is copied through. |
 | `grids` | A label repeated over a set of positions. |
 
 ## A text entry
@@ -82,6 +82,8 @@ only `locale` and the `t` strings change — so a new language starts as a copy 
 | `letterSpacing` | — | Pixels. Rarely needed. |
 | `transform` | — | CSS `text-transform`, e.g. `uppercase`. |
 | `opacity` | — | For disabled or dimmed labels. |
+| `src` | — | The original string this replaces. Recommended: it documents the pair for review, and the colour sampler sizes its box from it rather than from a translation of a different length. |
+| `sampleW` | — | Explicit sampling box width in pixels. Use when a translation runs past the original into an icon or a bar and the sampler reports that colour instead. |
 | `mask` | `false` | Draw a background plate behind the text. See below. |
 | `maskColor` | from `mask` | Plate colour for this entry, e.g. the fill of the button it sits on. |
 | `maskW` | — | Fixed plate width, to cover an original longer than the translation. |

@@ -62,9 +62,11 @@ consumes.
 The user supplies screenshots with the original text baked in. The goal is a spec whose labels land
 exactly on top of the originals: same place, same size, same weight, same colour.
 
-1. **Read every screenshot** with the Read tool and inventory the visible text. Note what the app
-   is, what each screen does, and which strings are UI chrome versus content — you need this for
-   translation context.
+1. **Read every screenshot** with the Read tool and inventory **every glyph on screen, numbers
+   included**. Counters, stat values, ranks, prices, timers, badge counts — all of it. See
+   "Numbers are text too" below; skipping them is the most expensive mistake in this workflow.
+   Note what the app is, what each screen does, and which strings are UI chrome versus content —
+   you need this for translation context.
 2. **Measure coordinates.** The Read tool downscales images and reports the multiplier
    ("Multiply coordinates by 1.34"). Multiply every position you read off by that factor to get
    real pixels. See `references/measuring.md`.
@@ -148,8 +150,32 @@ choices back so wrong ones are easy to spot.
 - **Flat panels carry no shadow.** Set `"shadow": "none"` for text printed onto a solid card or
   button. A drop shadow where the original has none is immediately visible.
 - **Check the render, not the spec.** Read the output PNG back after every pass.
-- **A screen with nothing to translate still belongs in the spec** with `"texts": []`. It is copied
-  through unchanged, so the output folder stays a complete set.
+- **A screen with nothing at all to draw still belongs in the spec** with `"texts": []`. It is
+  copied through unchanged, so the output folder stays a complete set. In practice almost every
+  screen has something — see below.
+
+## Numbers are text too
+
+Draw every number the screenshot shows: counters, stat values, ranks like `1/5`, currency amounts,
+percentages, badge counts, timers. Two independent reasons, and either one alone is decisive.
+
+**The clean screenshots will not have them.** Phase 2 renders onto images with the text removed, and
+whoever produces those images removes *all* baked-in text, digits with it. Any number missing from
+the spec is simply gone from the final image, and it is gone silently — nothing errors, the layout
+just quietly loses its values.
+
+**Digit shapes differ between fonts.** The face carrying the translation is often not the one the
+original used — the game's face may have no Cyrillic or no Greek, so a substitute steps in. If the
+words are drawn and the digits are left baked in, the screenshot ends up with two different sets of
+numerals side by side. Lining figures next to old-style ones, a slashed zero next to a plain one,
+different digit widths in a column. It reads as broken even to someone who cannot name why.
+
+So a gameplay screen showing nothing but a HUD full of counters is **not** a screen with no text.
+It is a screen whose every label is a number, and it gets a full set of entries.
+
+Numbers are usually **centre-anchored** — a value column, a badge, a segmented bar — so reach for
+`"align": "center"` before `left`. Keep the original's own formatting exactly: thousands separators,
+decimal comma versus point, `77/100(+50)`, `57/57`. Only the words around a number get translated.
 
 ## Setup
 
