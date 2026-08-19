@@ -291,6 +291,19 @@ everything else from the script face:
 `check-font-coverage.py` finds this before a render does: run it against every locale's own strings,
 not against a script sample.
 
+**When the project has no font for a script at all**, do not drop the locale — source a free one and
+say which. Google's Noto family covers essentially every script under the SIL Open Font License,
+which is free for commercial use:
+
+```
+https://github.com/notofonts/notofonts.github.io/raw/main/fonts/NotoSans<Script>/googlefonts/ttf/NotoSans<Script>-Regular.ttf
+```
+
+Match the *style* the project already uses where you can — a brush face next to a plain sans in the
+same set of screenshots is visible even to someone who cannot read either. Keep sourced fonts in
+their own folder, separate from the ones the project supplied, so it stays obvious which is which,
+and tell the user the licence.
+
 ## One calibrated layout, many locales
 
 Calibration is expensive and language independent: coordinates, colours and the room each label has
@@ -310,6 +323,11 @@ Two things the generator should do that a hand-written spec usually forgets:
   the value beside it. English has slack that Finnish, Greek and Romanian do not.
 - **Translate the grids too.** A `grids` entry is a label repeated over a set of positions, and it is
   easy to walk `texts` and silently leave every card in a grid in English.
+
+Pick the neighbour by **x**, not by position in the row list. Two panels routinely sit within a few
+pixels of the same `y` in different columns, and taking the leftmost of those as "the next thing
+along" yields a negative budget, which then reads as "no budget" and skips the label entirely. The
+bug is invisible in the language you calibrated in and shows up as an overrun three languages later.
 
 Check the whole set at once with `build-gallery-multi.py`: one page, every locale behind a switcher.
 A font that fell back, a button that overflowed, a column that collided — one arrow key apart.
