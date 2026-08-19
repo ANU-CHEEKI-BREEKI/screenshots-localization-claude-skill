@@ -51,6 +51,7 @@ only `locale` and the `t` strings change — so a new language starts as a copy 
 | `locale` | Locale code. Names the output folder (`out/<locale>/`) and the gallery file. |
 | `source` | Folder of source screenshots, relative to the spec. Overridable with `--source`. |
 | `out` | Output root, relative to the spec. Default `out`. Overridable with `--out`. |
+| `variant` | Screenshot size this spec covers, e.g. `APP_IPHONE_65`. Appended to the output path and the gallery name, so a phone spec and a tablet spec do not overwrite each other. Optional but expected whenever a locale has more than one size. |
 | `width` / `height` | Real pixel size of the screenshots. The render is produced at exactly this size. |
 | `defaults` | Inherited by every text entry. Anything in an entry overrides it. |
 | `fonts` | The project's own font files, embedded into the render. See below. Optional. |
@@ -85,6 +86,12 @@ only `locale` and the `t` strings change — so a new language starts as a copy 
 | `opacity` | — | For disabled or dimmed labels. |
 | `src` | — | The original string this replaces. Recommended: it documents the pair for review, and the colour sampler sizes its box from it rather than from a translation of a different length. |
 | `sampleW` | — | Explicit sampling box width in pixels. Use when a translation runs past the original into an icon or a bar and the sampler reports that colour instead. |
+| `maxW` | — | The width the label is allowed. It wraps inside that box. |
+| `maxH` | — | Height budget, used together with `fit` when the text wraps. |
+| `nowrap` | `false` | Keep the label on one line inside `maxW`, so `fit` shrinks it instead of wrapping. |
+| `lineHeight` | `1` / `1.12` | Line height. Defaults to 1.12 when wrapping. |
+| `fit` | `false` | Step the font size down until the label fits `maxW`/`maxH`. |
+| `minSize` | 60% of `size` | Floor for `fit`. |
 | `mask` | `false` | Draw a background plate behind the text. See below. |
 | `maskColor` | from `mask` | Plate colour for this entry, e.g. the fill of the button it sits on. |
 | `maskW` | — | Fixed plate width, to cover an original longer than the translation. |
@@ -95,6 +102,27 @@ Same fields as a text entry, except `x`/`y` are replaced by `xs` and `ys`: the l
 every combination. Use it for repeated chrome — level badges on a row of item cards, a price under
 every tile. The colour sampler probes the first cell only, which is what you want since they all
 match.
+
+## Fitting a translation into the space it has
+
+A translation is routinely 20–40% longer than the original and a screenshot cannot reflow around it.
+Two tools, and which one is right is a layout question, not a preference:
+
+```json
+{ "t": "Переглянути всі майстерності", "src": "See All Masteries", "x": 637, "y": 1153,
+  "align": "center", "maxW": 300, "maxH": 76, "lineHeight": 1.05, "fit": true, "minSize": 18 }
+
+{ "t": "Переносима вага", "src": "Carry Weight", "x": 2032, "y": 216,
+  "maxW": 215, "nowrap": true, "fit": true, "minSize": 22 }
+```
+
+- **Wrap** when there is vertical room: a button, a card, a standalone caption. The anchor still
+  refers to the middle of the whole block, so the label stays centred as it grows.
+- **Shrink** when there is not: a dense stat column where two lines would collide with the rows above
+  and below. `nowrap` plus `fit` keeps one line and reduces the size until it fits.
+
+`render.mjs` prints every label it shrank and by how much, so a size that dropped further than you
+expected is visible rather than silent.
 
 ## `fonts`
 

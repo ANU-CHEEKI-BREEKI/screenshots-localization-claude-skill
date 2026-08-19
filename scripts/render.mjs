@@ -81,6 +81,12 @@ function renderText(spec, text) {
     ? `width:${t.maskW}px;text-align:${t.align};box-sizing:border-box;`
     : '';
 
+  // a translation is routinely longer than the original, and a screenshot cannot reflow around it.
+  // maxW gives the label the width it is actually allowed: by default it wraps inside that box,
+  // and nowrap keeps it on one line so "fit" can shrink it instead. Which of the two is right is a
+  // layout question - a button has room below its text and a dense stat row does not
+  const wrapping = t.maxW && !t.nowrap;
+
   const style = [
     'position:absolute',
     `left:${t.x}px`,
@@ -94,13 +100,21 @@ function renderText(spec, text) {
     t.letterSpacing ? `letter-spacing:${t.letterSpacing}px` : '',
     t.transform ? `text-transform:${t.transform}` : '',
     t.opacity != null ? `opacity:${t.opacity}` : '',
-    'white-space:pre',
-    'line-height:1',
+    t.maxW ? `width:${t.maxW}px` : '',
+    wrapping ? `white-space:normal;text-align:${t.align};overflow-wrap:break-word` : 'white-space:pre',
+    `line-height:${t.lineHeight ?? (wrapping ? 1.12 : 1)}`,
     plate,
     plateWidth,
   ].filter(Boolean).join(';');
 
-  return `<div style="${style}">${escapeHtml(t.t)}</div>`;
+  // shrink-to-fit runs after layout, once the real font is loaded and has real metrics
+  const fit = t.fit
+    ? ` data-fit="1" data-maxw="${t.maxW ?? ''}" data-maxh="${t.maxH ?? ''}"` +
+      ` data-min="${t.minSize ?? Math.max(10, Math.round(t.size * 0.6))}"` +
+      ` data-wrap="${wrapping ? 1 : 0}"`
+    : '';
+
+  return `<div${fit} style="${style}">${escapeHtml(t.t)}</div>`;
 }
 
 /** a grid repeats one label over a set of x/y positions, for things like a row of item cards */
@@ -183,7 +197,9 @@ for (const specPath of specPaths) {
   const specDir = dirname(specPath);
 
   const sourceDir = resolve(specDir, sourceOverride ?? spec.source);
-  const outDir = resolve(specDir, outOverride ?? spec.out ?? 'out', spec.locale);
+  // a locale usually has more than one screenshot size - phone and tablet are different images at
+  // different resolutions, so they are different specs. "variant" keeps their output apart
+  const outDir = resolve(specDir, outOverride ?? spec.out ?? 'out', spec.locale, spec.variant ?? '');
   const tmpDir = join(specDir, '.render-tmp');
 
   if (!existsSync(sourceDir)) {
@@ -218,6 +234,34 @@ for (const specPath of specPaths) {
     writeFileSync(htmlPath, buildHtml(spec, specDir, source, texts));
     await page.goto(`file://${htmlPath}`);
     await page.evaluate(() => document.fonts.ready);
+
+    // step the size down until the label fits the box it was given. done in the browser because
+    // only the browser knows how wide the real font actually draws this string
+    const shrunk = await page.evaluate(() => {
+      const out = [];
+      document.querySelectorAll('[data-fit]').forEach((el) => {
+        const maxW = parseFloat(el.dataset.maxw) || Infinity;
+        const maxH = parseFloat(el.dataset.maxh) || Infinity;
+        const wraps = el.dataset.wrap === '1';
+        const min = parseFloat(el.dataset.min);
+
+        const overflows = () =>
+          (wraps ? false : el.scrollWidth > maxW + 0.5) || el.scrollHeight > maxH + 0.5;
+
+        const from = parseFloat(el.style.fontSize);
+        let size = from;
+        while (size > min && overflows()) {
+          size -= 0.5;
+          el.style.fontSize = `${size}px`;
+        }
+        if (size !== from) out.push([el.textContent, from, size]);
+      });
+      return out;
+    });
+
+    for (const [text, from, to] of shrunk) {
+      console.log(`   [fit] "${text}" ${from}px -> ${to}px`);
+    }
 
     // a font that failed to load does not throw, it silently substitutes, and the render then
     // looks almost right - which is worse than an error. document.fonts.check() is no use here:

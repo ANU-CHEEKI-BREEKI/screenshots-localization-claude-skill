@@ -75,8 +75,9 @@ def main():
 
     locale = spec["locale"]
     source_dir = os.path.abspath(os.path.join(spec_dir, args.source or spec["source"]))
+    variant = spec.get("variant", "")
     out_dir = os.path.abspath(
-        args.out or os.path.join(spec_dir, spec.get("out", "out"), locale)
+        args.out or os.path.join(spec_dir, spec.get("out", "out"), locale, variant)
     )
 
     here = os.path.dirname(os.path.abspath(__file__))
@@ -150,7 +151,7 @@ def main():
         stat(f'{spec["width"]}&times;{spec["height"]}', "output size"),
     ])
 
-    title = args.title or f"{locale} screenshots"
+    title = args.title or f"{locale} screenshots{' ' + variant if variant else ''}"
     page = (template
         .replace("__TITLE__", html.escape(title))
         .replace("__EYEBROW__", html.escape(spec.get("eyebrow", f"locale {locale}")))
@@ -170,7 +171,7 @@ def main():
             html.escape(os.path.relpath(out_dir, spec_dir)) + "/</code>."))
     )
 
-    dest = os.path.join(spec_dir, f"gallery-{locale}.html")
+    dest = os.path.join(spec_dir, f"gallery-{locale}{'-' + variant if variant else ''}.html")
     with open(dest, "w") as fh:
         fh.write(page)
 

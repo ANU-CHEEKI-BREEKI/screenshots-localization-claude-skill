@@ -244,6 +244,37 @@ silently, and the output would have looked fine at a glance.
 When a font does not cover the language, look for the project's own fallback before proposing one:
 the folder almost always contains it, and using their file keeps the render honest.
 
+## A locale is not one spec
+
+An app store listing carries a set of screenshots **per device size** — phone and tablet are
+different images at different resolutions with genuinely different layouts, not one scaled to the
+other. So the unit of work is a spec per *locale × size*, not per locale:
+
+```
+spec.uk.json         "variant": "APP_IPHONE_65"           2688x1242
+spec.uk-ipad.json    "variant": "APP_IPAD_PRO_3GEN_129"   2732x2048
+```
+
+`variant` keeps their output and their galleries apart (`out/<locale>/<variant>/`), and
+`render.mjs --all` still does every spec in one pass. Ask which sizes are in play at the start, and
+do not assume the phone set is the whole job — a tablet layout usually exposes strings the phone
+never shows, keyboard hints and extra buttons among them.
+
+Positions do **not** carry across sizes: measure each one. Strings do, so the translation work is
+shared and only the coordinates are new.
+
+## Text that does not fit
+
+Translations run longer than English, and a screenshot cannot reflow. When a label overruns its
+button or collides with the element next to it, fix it in the spec — never by shortening a wording
+that came out of the project's own localization files.
+
+- **`maxW` + wrapping** where there is vertical room: buttons, cards, captions.
+- **`maxW` + `nowrap` + `fit`** where there is not: dense stat rows, where a second line would
+  collide with the rows above and below. The size steps down until it fits.
+
+`references/spec-format.md` has the fields. `render.mjs` reports every label it shrank.
+
 ## Numbers are text too
 
 Draw every number the screenshot shows: counters, stat values, ranks like `1/5`, currency amounts,
