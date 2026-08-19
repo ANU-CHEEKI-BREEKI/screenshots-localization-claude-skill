@@ -1,0 +1,60 @@
+{
+  "locale": "uk",
+  "source": "../screenshots/en-US",
+  "out": "out",
+  "width": 2688,
+  "height": 1242,
+
+  "sourceLabel": "EN",
+  "eyebrow": "Example app · 1.0 · iPhone 6.5″",
+  "headline": "Ukrainian screenshots, first pass",
+
+  "defaults": {
+    "font": "Poppins",
+    "weight": 500,
+    "color": "#ffffff",
+    "align": "left",
+    "size": 36,
+    "shadow": "0 1px 3px rgba(0,0,0,0.45)"
+  },
+
+  "mask": {
+    "padX": 10,
+    "padY": 4,
+    "radius": 8,
+    "color": "rgba(20,16,28,0.72)",
+    "blur": 6
+  },
+
+  "screens": [
+    {
+      "file": "01_equipment.png",
+      "note": "Equipment screen - stat column plus a right-hand summary",
+      "texts": [
+        { "t": "Спорядження", "x": 276, "y": 83, "size": 58, "weight": 600 },
+
+        { "t": "Живучість", "x": 235, "y": 552, "color": "#45c7aa" },
+        { "t": "Витривалість", "x": 235, "y": 630, "color": "#c1b70e" },
+
+        { "t": "Сер. шкода", "x": 2032, "y": 632, "color": "#e48e55" },
+        { "t": "Розсік", "x": 2027, "y": 696, "size": 30, "color": "#de8a53" },
+        { "t": "Прокол", "x": 2150, "y": 696, "size": 30, "color": "#eb9257" },
+
+        { "t": "Спорядити", "x": 2460, "y": 1156, "size": 40, "align": "center",
+          "color": "#993a07", "dark": true, "shadow": "none" }
+      ],
+      "grids": [
+        { "t": "Рв. 1", "size": 30, "align": "center", "color": "#2a2325",
+          "dark": true, "shadow": "none",
+          "xs": [446, 642, 840, 1037, 1234, 1430, 1626, 1824],
+          "ys": [407, 660, 915] }
+      ]
+    },
+
+    {
+      "file": "02_gameplay.png",
+      "note": "gameplay, only numbers on screen - nothing to localize",
+      "texts": []
+    }
+  ]
+}

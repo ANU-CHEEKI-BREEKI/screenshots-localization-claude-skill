@@ -1,0 +1,16 @@
+{
+  "name": "screenshots-localization-claude-skill",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Overlay translated text onto screenshots, one rendered image per locale.",
+  "scripts": {
+    "render": "node scripts/render.mjs",
+    "sample": "node scripts/sample-colors.mjs",
+    "gallery": "python3 scripts/build-gallery.py",
+    "postinstall": "playwright install chromium"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.0"
+  }
+}

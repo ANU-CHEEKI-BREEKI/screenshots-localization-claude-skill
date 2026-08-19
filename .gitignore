@@ -1,0 +1,6 @@
+node_modules/
+.render-tmp/
+out/
+gallery-*.html
+*.log
+.DS_Store

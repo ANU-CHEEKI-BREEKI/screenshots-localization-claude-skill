@@ -1,0 +1,211 @@
+<title>__TITLE__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Public+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ground:#f2f0f6; --surface:#ffffff; --sunken:#e7e3ee;
+  --ink:#241f31; --ink-soft:#5f5872; --ink-faint:#8b8399;
+  --line:#ded8e8; --line-firm:#c9c1d8;
+  --accent:#b07d18; --accent-solid:#d9a441; --focus:#5b4d94;
+  --shadow:0 1px 2px rgba(36,31,49,.06), 0 8px 24px -12px rgba(36,31,49,.18);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:#141119; --surface:#1e1a27; --sunken:#181420;
+    --ink:#ece8f4; --ink-soft:#a79fba; --ink-faint:#7d7590;
+    --line:#2e2839; --line-firm:#413a51;
+    --accent:#e0b055; --accent-solid:#d9a441; --focus:#a596e0;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 28px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"] {
+  --ground:#141119; --surface:#1e1a27; --sunken:#181420;
+  --ink:#ece8f4; --ink-soft:#a79fba; --ink-faint:#7d7590;
+  --line:#2e2839; --line-firm:#413a51;
+  --accent:#e0b055; --accent-solid:#d9a441; --focus:#a596e0;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 28px -14px rgba(0,0,0,.7);
+}
+
+*,*::before,*::after { box-sizing:border-box }
+body {
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"Public Sans",system-ui,sans-serif; font-size:16px; line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2 { font-family:"Outfit",system-ui,sans-serif; margin:0; text-wrap:balance }
+
+.wrap { max-width:1180px; margin:0 auto; padding:0 20px 80px }
+
+/* ---- masthead ---- */
+.mast { padding:56px 0 28px; border-bottom:1px solid var(--line) }
+.eyebrow {
+  font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin:0 0 12px;
+}
+.mast h1 { font-size:clamp(30px,4.4vw,44px); font-weight:700; letter-spacing:-.02em; line-height:1.1 }
+.mast p { margin:14px 0 0; max-width:62ch; color:var(--ink-soft) }
+
+.stats { display:flex; flex-wrap:wrap; gap:0; margin:30px 0 0; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--surface) }
+.stat { flex:1 1 150px; padding:14px 18px; border-right:1px solid var(--line) }
+.stat:last-child { border-right:0 }
+.stat__n { font-family:"Outfit",sans-serif; font-size:26px; font-weight:600; line-height:1.1; font-variant-numeric:tabular-nums }
+.stat__l { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin-top:3px }
+
+/* ---- controls ---- */
+.bar {
+  position:sticky; top:0; z-index:20; display:flex; flex-wrap:wrap; gap:14px;
+  align-items:center; justify-content:space-between;
+  padding:12px 0; margin-bottom:26px;
+  background:color-mix(in srgb, var(--ground) 92%, transparent);
+  backdrop-filter:blur(10px); border-bottom:1px solid var(--line);
+}
+.modes { display:flex; gap:3px; padding:3px; background:var(--sunken); border-radius:9px; border:1px solid var(--line) }
+.modes button {
+  font:500 13px/1 "Public Sans",sans-serif; color:var(--ink-soft);
+  padding:8px 14px; border:0; border-radius:6px; background:transparent; cursor:pointer;
+}
+.modes button:hover { color:var(--ink) }
+.modes button[aria-pressed="true"] { background:var(--surface); color:var(--ink); box-shadow:var(--shadow) }
+.modes button:focus-visible, .viewer:focus-visible { outline:2px solid var(--focus); outline-offset:2px }
+.hint { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-faint) }
+
+/* ---- cards ---- */
+.cards { display:flex; flex-direction:column; gap:34px }
+.card { background:var(--surface); border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadow) }
+.card__head { display:flex; align-items:center; gap:14px; padding:14px 18px; border-bottom:1px solid var(--line) }
+.card__idx {
+  flex:0 0 auto; width:26px; height:26px; display:grid; place-items:center;
+  font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:500;
+  color:var(--ink-faint); border:1px solid var(--line-firm); border-radius:6px;
+}
+.card__id { flex:1 1 auto; min-width:0 }
+.card__file { font-size:15px; font-weight:600; font-family:"IBM Plex Mono",monospace; letter-spacing:-.01em }
+.card__note { margin:1px 0 0; font-size:13px; color:var(--ink-faint) }
+.chip {
+  flex:0 0 auto; font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em;
+  text-transform:uppercase; padding:5px 10px; border-radius:20px; white-space:nowrap;
+}
+.chip--on { color:var(--accent); background:color-mix(in srgb, var(--accent-solid) 15%, transparent) }
+.chip--off { color:var(--ink-faint); background:var(--sunken) }
+.chip__n { font-weight:500; font-variant-numeric:tabular-nums }
+
+/* ---- the viewer ---- */
+.viewer { position:relative; display:block; background:var(--sunken); touch-action:pan-y; cursor:ew-resize; user-select:none }
+.viewer__img { display:block; width:100%; height:auto }
+.viewer__img--b { position:absolute; inset:0; clip-path:inset(0 0 0 var(--wipe)) }
+.handle { position:absolute; top:0; bottom:0; left:var(--wipe); width:2px; background:var(--accent-solid); transform:translateX(-1px) }
+.handle__grip {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:30px; height:30px; border-radius:50%; background:var(--accent-solid);
+  box-shadow:0 2px 10px rgba(0,0,0,.35);
+}
+.handle__grip::before {
+  content:"\2039\00a0\203a"; position:absolute; inset:0; display:grid; place-items:center;
+  font:600 15px/1 "Outfit",sans-serif; color:#241f31;
+}
+.tag {
+  position:absolute; top:10px; font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:500;
+  letter-spacing:.1em; padding:4px 9px; border-radius:5px; color:#fff; background:rgba(20,17,25,.72);
+  backdrop-filter:blur(4px); pointer-events:none;
+}
+.tag--a { left:10px }
+.tag--b { right:10px; background:color-mix(in srgb, var(--accent-solid) 88%, #000); color:#241f31 }
+
+.mode-split .viewer { display:grid; grid-template-columns:1fr 1fr; gap:2px; cursor:default }
+.mode-split .viewer__img--b { position:static; clip-path:none }
+.mode-split .handle { display:none }
+.mode-split .tag--b { right:auto; left:calc(50% + 10px) }
+
+.mode-b .viewer { cursor:default }
+.mode-b .viewer__img--b { clip-path:none }
+.mode-b .handle, .mode-b .tag--a { display:none }
+
+.foot { margin-top:48px; padding-top:22px; border-top:1px solid var(--line); color:var(--ink-faint); font-size:14px }
+.foot code { font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--ink-soft); background:var(--sunken); padding:2px 6px; border-radius:4px }
+.foot p { max-width:70ch }
+
+@media (prefers-reduced-motion:reduce) { *{transition:none!important} }
+@media (max-width:640px) {
+  .mast { padding-top:36px }
+  .mode-split .viewer { grid-template-columns:1fr }
+  .mode-split .tag--b { left:auto; right:10px }
+}
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <p class="eyebrow">__EYEBROW__</p>
+    <h1>__HEADLINE__</h1>
+    <p>__INTRO__</p>
+    <div class="stats">
+__STATS__
+    </div>
+  </header>
+
+  <div class="bar">
+    <div class="modes" role="group" aria-label="Comparison mode">
+      <button type="button" data-mode="wipe" aria-pressed="true">Wipe</button>
+      <button type="button" data-mode="split" aria-pressed="false">Side by side</button>
+      <button type="button" data-mode="b" aria-pressed="false">__LABEL_B__ only</button>
+    </div>
+    <p class="hint">drag across an image &middot; arrow keys nudge</p>
+  </div>
+
+  <main class="cards">
+__CARDS__
+  </main>
+
+  <footer class="foot">
+    <p>__FOOTER__</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var wrap = document.querySelector('.wrap');
+
+  document.querySelectorAll('.modes button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.modes button').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(b === btn));
+      });
+      wrap.classList.remove('mode-wipe', 'mode-split', 'mode-b');
+      wrap.classList.add('mode-' + btn.dataset.mode);
+    });
+  });
+
+  document.querySelectorAll('.viewer').forEach(function (viewer) {
+    function set(pct) {
+      var v = Math.max(0, Math.min(100, pct));
+      viewer.style.setProperty('--wipe', v + '%');
+      viewer.setAttribute('aria-valuenow', Math.round(v));
+    }
+
+    function fromEvent(e) {
+      var r = viewer.getBoundingClientRect();
+      set(((e.clientX - r.left) / r.width) * 100);
+    }
+
+    viewer.addEventListener('pointerdown', function (e) {
+      if (wrap.classList.contains('mode-split') || wrap.classList.contains('mode-b')) return;
+      viewer.setPointerCapture(e.pointerId);
+      fromEvent(e);
+    });
+
+    viewer.addEventListener('pointermove', function (e) {
+      if (!viewer.hasPointerCapture || !viewer.hasPointerCapture(e.pointerId)) return;
+      fromEvent(e);
+    });
+
+    viewer.addEventListener('keydown', function (e) {
+      var step = e.shiftKey ? 10 : 2;
+      var now = parseFloat(viewer.getAttribute('aria-valuenow')) || 50;
+      if (e.key === 'ArrowLeft')  { set(now - step); e.preventDefault(); }
+      if (e.key === 'ArrowRight') { set(now + step); e.preventDefault(); }
+      if (e.key === 'Home')       { set(0);   e.preventDefault(); }
+      if (e.key === 'End')        { set(100); e.preventDefault(); }
+    });
+  });
+})();
+</script>
