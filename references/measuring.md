@@ -30,6 +30,14 @@ faster than measuring precisely.
 
 ## Identifying the typeface
 
+**First, ask whether the user has the font files.** Identifying a face from a screenshot gets you
+close and never gets you exact — different digit widths, a different `g`, slightly different
+spacing that shows up as drift across a long label. If they have the `.ttf`/`.otf`/`.woff2`, use it:
+declare it in the spec's `fonts` array. People often do have it and do not think to offer it.
+
+Only when they do not, identify the closest match — and say which one you picked, so they can
+correct you.
+
 Never judge the face from the downscaled image. Crop a title and a body line at native resolution
 and enlarge them:
 

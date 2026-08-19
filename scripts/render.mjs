@@ -13,7 +13,7 @@
 
 import { chromium } from 'playwright';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'fs';
-import { dirname, resolve, join, basename } from 'path';
+import { dirname, resolve, join, basename, extname } from 'path';
 import { fileURLToPath } from 'url';
 
 const here = process.cwd();
@@ -112,18 +112,60 @@ function expandGrids(screen) {
   return [...(screen.texts ?? []), ...fromGrids];
 }
 
-function buildHtml(spec, imagePath, texts) {
+const MIME = { woff2: 'font/woff2', woff: 'font/woff', ttf: 'font/ttf', otf: 'font/otf' };
+const FORMAT = { woff2: 'woff2', woff: 'woff', ttf: 'truetype', otf: 'opentype' };
+
+/**
+ * The project's own font files, inlined as data URIs.
+ *
+ * A local file has to be embedded rather than linked: the render page lives on file://, and a
+ * font fetched from there is refused. Embedding also removes the failure mode that matters most
+ * here - a missing font does not throw, the browser quietly falls back to something else and the
+ * render looks almost right, which is far worse than an error.
+ */
+function fontFaces(spec, specDir) {
+  return (spec.fonts ?? []).map((f) => {
+    const file = resolve(specDir, f.src);
+    if (!existsSync(file)) {
+      console.error(`[ERROR] font file not found: ${file}`);
+      process.exit(1);
+    }
+
+    const ext = extname(file).slice(1).toLowerCase();
+    if (!FORMAT[ext]) {
+      console.error(`[ERROR] unsupported font format '${ext}' (${file}). Use woff2, woff, ttf or otf.`);
+      process.exit(1);
+    }
+
+    const data = readFileSync(file).toString('base64');
+
+    return `@font-face{font-family:'${f.family}';` +
+      `font-weight:${f.weight ?? 400};font-style:${f.style ?? 'normal'};` +
+      `src:url(data:${MIME[ext]};base64,${data}) format('${FORMAT[ext]}');font-display:block}`;
+  }).join('\n');
+}
+
+function buildHtml(spec, specDir, imagePath, texts) {
+  const local = new Set((spec.fonts ?? []).map((f) => f.family));
   const families = [...new Set(texts.map((t) => (t.font ?? spec.defaults.font)))];
-  const fontLink = families
+
+  // only families without a local file are asked of google fonts
+  const remote = families.filter((f) => !local.has(f));
+  const fontLink = remote
     .map((f) => `family=${encodeURIComponent(f)}:wght@300;400;500;600;700;800`)
     .join('&');
 
+  const googleFonts = remote.length
+    ? `<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?${fontLink}&display=swap" rel="stylesheet">`
+    : '';
+
   return `<!doctype html>
 <html><head><meta charset="utf-8">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?${fontLink}&display=swap" rel="stylesheet">
+${googleFonts}
 <style>
+${fontFaces(spec, specDir)}
   html,body{margin:0;padding:0;background:#000}
   #stage{position:relative;width:${spec.width}px;height:${spec.height}px;overflow:hidden}
   #stage img{display:block;width:${spec.width}px;height:${spec.height}px}
@@ -173,9 +215,32 @@ for (const specPath of specPaths) {
     const texts = expandGrids(screen);
     const htmlPath = join(tmpDir, `${spec.locale}-${screen.file}.html`);
 
-    writeFileSync(htmlPath, buildHtml(spec, source, texts));
+    writeFileSync(htmlPath, buildHtml(spec, specDir, source, texts));
     await page.goto(`file://${htmlPath}`);
     await page.evaluate(() => document.fonts.ready);
+
+    // a font that failed to load does not throw, it silently substitutes, and the render then
+    // looks almost right - which is worse than an error. document.fonts.check() is no use here:
+    // it answers true for a family that was never defined. Measuring is the only honest test:
+    // if "X", monospace renders exactly as wide as monospace alone, X never resolved
+    const families = [...new Set(texts.map((t) => t.font ?? spec.defaults.font))];
+    const missing = await page.evaluate((families) => {
+      const canvas = document.createElement('canvas').getContext('2d');
+      const probe = 'MMMWWWiiillo0123456789';
+
+      const width = (font) => {
+        canvas.font = `500 72px ${font}`;
+        return canvas.measureText(probe).width;
+      };
+
+      return families.filter((f) =>
+        ['monospace', 'serif'].every((fb) => width(`"${f}", ${fb}`) === width(fb))
+      );
+    }, families);
+
+    for (const family of missing) {
+      console.log(`   [WARN] '${family}' did not resolve - the render fell back to another face.`);
+    }
 
     await page.locator('#stage').screenshot({ path: join(outDir, screen.file) });
 

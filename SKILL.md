@@ -36,8 +36,35 @@ few lines and say which one you are starting. Something like:
 > I am starting phase 1 now. Do you have the app's existing translations anywhere, or should I
 > translate from what I see on screen?
 
-**Ask, do not assume,** about: which locales are needed, whether translations already exist, and
-where the clean screenshots will come from. Ask these early — the answers change what you do.
+### Ask these before doing any work
+
+All four change what you do, and all four are cheap to ask and expensive to guess. Put them in the
+**first** message, together, so the user answers once instead of being interrupted four times.
+
+1. **Which languages?** Never assume one. Get the full list up front — the spec is built once and
+   copied per locale, so knowing there are eight rather than one changes nothing about the work but
+   everything about how you report progress.
+
+2. **Do you already have translations?** A CSV, a `.strings` or `.arb` folder, an XLIFF export, a
+   spreadsheet. If yes, ask for the path and pull the exact wording with `find-translation.py`. The
+   product's own wording always beats anything you would write, and using it is the difference
+   between a review pass that finds two problems and one that finds twenty.
+
+3. **Do you have the fonts?** Ask explicitly, and ask for the files, not the name:
+
+   > Do you have the font files the app uses — `.ttf`, `.otf` or `.woff2`? If you point me at the
+   > folder I will render with the real thing. Otherwise I will identify the closest match on
+   > Google Fonts from the screenshots and tell you which one I picked.
+
+   A supplied font file is always right and a matched one never quite is, so this question is worth
+   asking even when the match looks convincing. See "Fonts" below.
+
+4. **Where will the clean screenshots come from?** Phase 2 needs the same screens with no baked-in
+   text. Ask early whether they exist, are planned, or are not happening — if they are not, the
+   whole job changes shape and plates become necessary (see `references/spec-format.md`).
+
+Do not block on the answers. Start reading and measuring the screenshots while you wait — that work
+is needed regardless of what they say.
 
 **During the review loop, be concrete about what to check.** "Have a look" is useless. Say: drag the
 wipe slider on each screenshot, look for labels in the wrong place, wrong size, wrong weight, wrong
@@ -70,8 +97,11 @@ exactly on top of the originals: same place, same size, same weight, same colour
 2. **Measure coordinates.** The Read tool downscales images and reports the multiplier
    ("Multiply coordinates by 1.34"). Multiply every position you read off by that factor to get
    real pixels. See `references/measuring.md`.
-3. **Identify the typeface.** Crop a title and a body line, enlarge them, and look at the
-   letterforms. Do not guess from the thumbnail — `references/measuring.md` lists the tells.
+3. **Set up the typeface.** If the user supplied font files, declare them in the spec's `fonts`
+   array and use them. If not, crop a title and a body line, enlarge them, identify the closest
+   Google Fonts match from the letterforms, and **tell the user which one you picked and why** —
+   they may have the real file and not have thought to mention it.
+   `references/measuring.md` lists the tells.
 4. **Get the strings** — see phase 3 below. Do this before writing the spec, not after.
 5. **Write `spec.<locale>.json`** with a position for every label. Schema in
    `references/spec-format.md`.
@@ -154,6 +184,34 @@ choices back so wrong ones are easy to spot.
   copied through unchanged, so the output folder stays a complete set. In practice almost every
   screen has something — see below.
 
+## Fonts
+
+**Prefer the user's own font files.** Ask for them; do not settle for a match without asking. Point
+the spec at the files and they are embedded into the render as data URIs:
+
+```json
+"fonts": [
+  { "family": "Titan UI", "src": "./fonts/TitanUI-Medium.woff2", "weight": 500 },
+  { "family": "Titan UI", "src": "./fonts/TitanUI-Bold.woff2",   "weight": 700 }
+],
+"defaults": { "font": "Titan UI", "weight": 500 }
+```
+
+One entry per weight and style, all sharing a `family`. `woff2`, `woff`, `ttf` and `otf` all work,
+and paths are relative to the spec. A family with no local file is fetched from Google Fonts
+instead, so the two can be mixed — the app's own display face plus a Google body face, for example.
+
+Two failure modes the renderer guards against, because both are silent otherwise:
+
+- **A missing file is a hard error.** It stops rather than rendering with something else.
+- **A family that does not resolve prints a warning.** A browser substitutes silently and the render
+  then looks *almost* right, which is worse than an error. If you see
+  `[WARN] 'X' did not resolve`, the output is wrong — fix it before showing anyone.
+
+Check that the supplied font actually covers the target script. A game face built for Latin often
+has no Cyrillic or Greek, and the browser will fall back per-glyph without saying anything. If it
+does not cover the language, say so and ask what they want to use instead.
+
 ## Numbers are text too
 
 Draw every number the screenshot shows: counters, stat values, ranks like `1/5`, currency amounts,
@@ -196,6 +254,7 @@ install ImageMagick and the scripts use `magick` instead.
 | `scripts/build-gallery.py` | Builds the before/after review page from `templates/gallery.html` |
 | `scripts/find-translation.py` | Finds existing translations for a source string in a folder |
 | `templates/gallery.html` | The review page itself — restyle here, no Python involved |
+| `fonts/` (yours) | Put supplied font files anywhere and point `fonts[].src` at them |
 | `examples/spec.example.json` | A filled-in spec to copy |
 | `references/spec-format.md` | Every field of the spec |
 | `references/measuring.md` | Measuring coordinates, identifying the typeface, cropping |

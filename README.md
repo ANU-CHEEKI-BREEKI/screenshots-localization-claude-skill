@@ -20,6 +20,11 @@ way for a person to see what the workflow is.
 3. **Strings.** If you already have translations — CSV, `.strings`, `.arb`, XLIFF — point at the
    folder and the exact wording is pulled from it. If not, the agent translates from what the
    screenshots actually show.
+4. **Fonts.** If you have the app's font files, point at them and they are used directly. If not,
+   the closest Google Fonts match is identified from the letterforms and named for you.
+
+You will be asked about languages, existing translations, fonts and clean screenshots up front —
+answer what you can, the rest can follow later.
 
 ## Setup
 

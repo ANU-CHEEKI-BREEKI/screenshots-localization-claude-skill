@@ -53,6 +53,7 @@ only `locale` and the `t` strings change — so a new language starts as a copy 
 | `out` | Output root, relative to the spec. Default `out`. Overridable with `--out`. |
 | `width` / `height` | Real pixel size of the screenshots. The render is produced at exactly this size. |
 | `defaults` | Inherited by every text entry. Anything in an entry overrides it. |
+| `fonts` | The project's own font files, embedded into the render. See below. Optional. |
 | `mask` | Shape of the optional background plate. Only applies to entries with `"mask": true`. |
 | `screens` | The list below. |
 | `sourceLabel`, `eyebrow`, `headline`, `intro`, `footer` | Copy for the review gallery. All optional. |
@@ -94,6 +95,28 @@ Same fields as a text entry, except `x`/`y` are replaced by `xs` and `ys`: the l
 every combination. Use it for repeated chrome — level badges on a row of item cards, a price under
 every tile. The colour sampler probes the first cell only, which is what you want since they all
 match.
+
+## `fonts`
+
+```json
+"fonts": [
+  { "family": "Titan UI", "src": "./fonts/TitanUI-Medium.woff2", "weight": 500 },
+  { "family": "Titan UI", "src": "./fonts/TitanUI-Bold.woff2",   "weight": 700, "style": "normal" }
+]
+```
+
+| Field | Default | Meaning |
+|---|---|---|
+| `family` | — | The name entries refer to in `font`. Several files share one family. |
+| `src` | — | Path to the file, relative to the spec. `woff2`, `woff`, `ttf`, `otf`. |
+| `weight` | `400` | The weight this file provides. |
+| `style` | `normal` | `normal` or `italic`. |
+
+Files are inlined as data URIs rather than linked, because the render page lives on `file://` and a
+font fetched from there is refused.
+
+Any family **not** listed here is requested from Google Fonts, so the two mix freely. A missing file
+is a hard error; a family that fails to resolve prints a warning rather than silently substituting.
 
 ## About `mask`
 
