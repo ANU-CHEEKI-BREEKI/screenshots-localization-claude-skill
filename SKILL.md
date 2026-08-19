@@ -395,6 +395,7 @@ install ImageMagick and the scripts use `magick` instead.
 | `scripts/sample-colors.mjs` | Reads the real colour of every label out of the originals |
 | `scripts/build-gallery.py` | Builds the before/after review page from `templates/gallery.html` |
 | `scripts/build-gallery-multi.py` | Builds one review page covering every locale, with a language switcher |
+| `scripts/build-specs.py` | Generates one spec per locale from a calibrated `layout.json` (edit its font map) |
 | `scripts/find-translation.py` | Finds existing translations for a source string in a folder |
 | `scripts/check-font-coverage.py` | Checks a font actually contains the target script's characters |
 | `templates/gallery.html` | The single-locale review page — restyle here, no Python involved |
